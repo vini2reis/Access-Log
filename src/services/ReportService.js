@@ -15,7 +15,7 @@ export async function createAndSendReport() {
     PASSWORD,
     SEND_TO
   } = process.env
-  
+
   console.log('A iniciar rotina automática de fecho diário corrigida...')
 
   if (logsDatabase.length === 0) {
@@ -80,15 +80,18 @@ export async function createAndSendReport() {
       pcLogs.forEach((log, index) => {
         const pcValue = (index === 0) ? pcName : null
 
+        const formatedSites = Array.isArray(log.origin) ? log.origin.join(', ') : log.origin
+
         const row = worksheet.addRow([
           pcValue,
           log.ip,
           log.email,
           log.date,
           log.browser,
-          log.origin
+          formatedSites
         ])
-        worksheet.getRow(currentLine).height = 22
+
+        worksheet.getRow(currentLine).height = undefined
 
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           cell.font = { name: 'Segoe UI', size: 10 }
@@ -99,7 +102,13 @@ export async function createAndSendReport() {
             right: { style: 'thin', color: { argb: 'BDC3C7' } }
           }
           
-          if ([1, 2, 4, 5].includes(colNumber)) {
+          if (colNumber === 6) {
+            cell.alignment = {
+              horizontal: 'left',
+              vertical: 'top',
+              wrapText: true
+            };
+          } else if ([1, 2, 4, 5].includes(colNumber)) {
             cell.alignment = { horizontal: 'center', vertical: 'middle' }
           } else {
             cell.alignment = { horizontal: 'left', vertical: 'middle' }
@@ -130,7 +139,7 @@ export async function createAndSendReport() {
       }
     })
 
-    worksheet.columns.forEach(column => {
+    worksheet.columns.forEach((column, index) => {
       let maxColumnLength = 0
       column.eachCell({ includeEmpty: false }, cell => {
         if (cell.row !== 1) {
@@ -138,7 +147,11 @@ export async function createAndSendReport() {
           if (cellLength > maxColumnLength) maxColumnLength = cellLength
         }
       })
-      column.width = maxColumnLength < 15 ? 15 : maxColumnLength + 5
+      if (index === 5) {
+        column.width = 50
+      } else {
+        column.width = maxColumnLength < 15 ? 15 : maxColumnLength + 5
+      }
     })
 
     const filePath = path.resolve(__dirname, '../../access_logs/relatorio_acessos_agrupado.xlsx')
@@ -146,9 +159,12 @@ export async function createAndSendReport() {
 
     const transporter = nodemailer.createTransport({
       host: SMTP_HOST,
-      port: parseInt(SMTP_PORT || '465'),
-      secure: true,
-      auth: { user: EMAIL, pass: PASSWORD }
+      port: parseInt(SMTP_PORT || '587'),
+      secure: false,
+      auth: { user: EMAIL, pass: PASSWORD },
+      tls: {
+        rejectUnauthorized: false
+      }
     })
 
     const now = new Date().toLocaleDateString('pt-BR')
@@ -162,7 +178,7 @@ export async function createAndSendReport() {
 
     console.log('Relatório corrigido e enviado com sucesso por e-mail!')
 
-    // resetDatabase()
+    resetDatabase()
 
   } catch (erro) {
       console.error('Falha crítica ao executar a rotina do Excel:', erro)
