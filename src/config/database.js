@@ -29,5 +29,5 @@ export const PcsMap = {
 }
 
 export const resetDatabase = () => {
-  bancoDeDadosLogs = []
+  logsDatabase = []
 }

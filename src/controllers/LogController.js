@@ -23,7 +23,7 @@ export const createLog = (req, res) => {
     const date = brazilTime
     const actualTimestamp = new Date().getTime()
 
-    const lastRegister = [...logsDatabase].reverse().find(log => log.email === email)
+    const lastRegister = [...logsDatabase].reverse().find(log => log.email === email && log.ip === ip)
 
     if (type === 'login') {
       if (lastRegister) {

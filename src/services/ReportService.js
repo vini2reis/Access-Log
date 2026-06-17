@@ -1,10 +1,10 @@
 import nodemailer from 'nodemailer'
 import ExcelJS from 'exceljs'
 import { logsDatabase, PcsMap, resetDatabase } from '../config/database.js'
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export async function createAndSendReport() {
@@ -107,7 +107,7 @@ export async function createAndSendReport() {
               horizontal: 'left',
               vertical: 'top',
               wrapText: true
-            };
+            }
           } else if ([1, 2, 4, 5].includes(colNumber)) {
             cell.alignment = { horizontal: 'center', vertical: 'middle' }
           } else {
