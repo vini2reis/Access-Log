@@ -1,18 +1,17 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import ExcelJS from 'exceljs'
 import { logsDatabase, PcsMap, resetDatabase } from '../config/database.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export async function createAndSendReport() {
   const {
-    SMTP_HOST,
-    SMTP_PORT,
+    RESEND_API_KEY,
     EMAIL,
-    PASSWORD,
     SEND_TO
   } = process.env
 
@@ -157,23 +156,23 @@ export async function createAndSendReport() {
     const filePath = path.resolve(__dirname, '../../access_logs/relatorio_acessos_agrupado.xlsx')
     await workbook.xlsx.writeFile(filePath)
 
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: parseInt(SMTP_PORT || '587'),
-      secure: false,
-      auth: { user: EMAIL, pass: PASSWORD },
-      tls: {
-        rejectUnauthorized: false
-      }
-    })
+    console.log('📡 Enviando e-mail através da API do Resend...')
+    const resend = new Resend(RESEND_API_KEY)
 
     const now = new Date().toLocaleDateString('pt-BR')
-    await transporter.sendMail({
-      from: `"Auditoria de TI" <${EMAIL}>`,
-      to: SEND_TO,
-      subject: `[Logs] Auditoria de Acessos Google - ${now}`,
-      text: `Segue em anexo o relatório diário corrigido e organizado por computador na data de hoje (${now}).`,
-      attachments: [{ filename: `Relatorio_Acessos_Google_${now.replace(/\//g, '-')}.xlsx`, path: filePath }]
+    const fileAttachment = fs.readFileSync(filePath)
+
+    await resend.emails.send({
+      from: 'Auditoria de TI <onboarding@resend.dev>',
+      to: EMAIL,
+      subject: `[Logs Monitoramento] Auditoria de Acessos - ${now}`,
+      text: `Segue em anexo o relatório diário organizado por computador na data de hoje (${now}).`,
+      attachments: [
+        {
+          filename: `Relatorio_Acessos_${now.replace(/\//g, '-')}.xlsx`,
+          content: fileAttachment,
+        },
+      ],
     })
 
     console.log('Relatório corrigido e enviado com sucesso por e-mail!')
