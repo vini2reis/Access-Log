@@ -55,7 +55,7 @@ export const createLog = (req, res) => {
     }
 
     if (lastRegister) {
-      if (lastRegister.origin[lastRegister.origin.length - 1] !== formatUrl) {
+      if (!lastRegister.origin.includes(formatUrl)) {
         lastRegister.origin.push(formatUrl)
       }
 
