@@ -23,7 +23,7 @@ export const createLog = (req, res) => {
     const date = brazilTime
     const actualTimestamp = new Date().getTime()
 
-    const lastRegister = [...logsDatabase].reverse().find(log => log.email === email && log.ip === ip)
+    const lastRegister = [...logsDatabase].reverse().find(log => log.email === email && log.ip === ip && log.browser === browser)
 
     if (type === 'login') {
       if (lastRegister) {
@@ -55,12 +55,17 @@ export const createLog = (req, res) => {
     }
 
     if (lastRegister) {
-      if (!lastRegister.origin.includes(formatUrl)) {
-        lastRegister.origin.push(formatUrl)
-      }
+      const difTime = actualTimestamp - lastRegister.register_time
+      const twentyMinutesMs = 20 * 60 * 1000
 
-      console.log(`[HISTÓRICO] Site adicionado ao usuário ${email}: ${origin}`)
-      return res.status(200).json({ mensagem: 'Site adicionado ao histórico do usuário.' })
+      if (!(email === 'Deslogado' && difTime >= twentyMinutesMs)) {
+        if (!lastRegister.origin.includes(formatUrl)) {
+          lastRegister.origin.push(formatUrl)
+        }
+
+        console.log(`[HISTÓRICO] Site adicionado ao usuário ${email}: ${origin}`)
+        return res.status(200).json({ mensagem: 'Site adicionado ao histórico do usuário.' })
+      }
     }
 
     const newLog = {
